@@ -7,6 +7,7 @@ import {
   Play,
   RotateCcw,
   Server,
+  Shield,
   ShieldAlert,
   Terminal,
   Timer,
@@ -15,8 +16,19 @@ import {
 import BotonMagnetico from '../components/comunes/BotonMagnetico.jsx';
 import { CodigoAuditoria } from '../components/comunes/FormatoInstitucional.jsx';
 import { dbaServicio } from '../api/dba.servicio.js';
+import VisorAuditoria from '../components/dba/VisorAuditoria.jsx';
 
 const CONSULTAS_PREDEFINIDAS = [
+  {
+    titulo: 'Bitácora Forense (Logs)',
+    descripcion: 'Últimas transacciones registradas por los triggers de Oracle',
+    sql: 'SELECT ID_LOG, LOG_TABLA, LOG_OPERACION, LOG_ID_REGISTRO, LOG_USUARIO, TO_CHAR(LOG_FECHA, \'YYYY-MM-DD HH24:MI:SS\') AS FECHA, LOG_VALOR_NUEVO FROM MODULO_COMPRAS.AUDITORIA_LOGS ORDER BY ID_LOG DESC FETCH FIRST 25 ROWS ONLY',
+  },
+  {
+    titulo: 'Triggers de Auditoría Activos',
+    descripcion: 'Estado de compilación de los triggers de base de datos',
+    sql: 'SELECT TRIGGER_NAME, TABLE_NAME, STATUS FROM USER_TRIGGERS ORDER BY TRIGGER_NAME',
+  },
   {
     titulo: 'Estado de la Instancia',
     descripcion: 'Versión del motor, nombre de instancia y estado del servicio',
@@ -45,6 +57,7 @@ const CONSULTAS_PREDEFINIDAS = [
 ];
 
 export default function ConsolaDBA() {
+  const [pestanaActiva, setPestanaActiva] = useState('consola'); // 'consola' | 'auditoria'
   const [consultaSql, setConsultaSql] = useState(
     'SELECT INSTANCE_NAME, STATUS, VERSION_FULL, HOST_NAME FROM V$INSTANCE'
   );
@@ -95,7 +108,7 @@ export default function ConsolaDBA() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-                Consola SQL DBA
+                Centro de Mando y Auditoría DBA
               </h1>
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                 <CheckCircle2 className="size-3" aria-hidden="true" />
@@ -114,29 +127,67 @@ export default function ConsolaDBA() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={limpiar}
-            disabled={ejecutando}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            <RotateCcw className="size-3.5" aria-hidden="true" />
-            Limpiar
-          </button>
-          <BotonMagnetico
-            variante="primario"
-            icono={Play}
-            cargando={ejecutando}
-            onClick={() => ejecutar()}
-          >
-            Ejecutar en Oracle
-          </BotonMagnetico>
-        </div>
+        {pestanaActiva === 'consola' && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={limpiar}
+              disabled={ejecutando}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              Limpiar
+            </button>
+            <BotonMagnetico
+              variante="primario"
+              icono={Play}
+              cargando={ejecutando}
+              onClick={() => ejecutar()}
+            >
+              Ejecutar en Oracle
+            </BotonMagnetico>
+          </div>
+        )}
       </header>
 
-      {/* Editor SQL */}
-      <div className="sombra-superficie overflow-hidden rounded-xl border border-slate-200/80 bg-white">
+      {/* Switcher de Pestañas: Consola SQL vs Bitácora de Auditoría */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+        <button
+          type="button"
+          onClick={() => setPestanaActiva('consola')}
+          className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition ${
+            pestanaActiva === 'consola'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          <Terminal className="size-4" aria-hidden="true" />
+          <span>Consola SQL Interactiva</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setPestanaActiva('auditoria')}
+          className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition ${
+            pestanaActiva === 'auditoria'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          <Shield className="size-4" aria-hidden="true" />
+          <span>Bitácora de Auditoría Forense</span>
+          <span className="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+            En Vivo
+          </span>
+        </button>
+      </div>
+
+      {/* Contenido segun pestana seleccionada */}
+      {pestanaActiva === 'auditoria' ? (
+        <VisorAuditoria />
+      ) : (
+        <>
+          {/* Editor SQL */}
+          <div className="sombra-superficie overflow-hidden rounded-xl border border-slate-200/80 bg-white">
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-500">
           <span className="font-mono font-medium text-slate-700">Editor SQL Interactivo</span>
           <span>Presione "Ejecutar en Oracle" para enviar la instrucción directa al motor</span>
@@ -272,6 +323,8 @@ export default function ConsolaDBA() {
             </div>
           )}
         </div>
+      )}
+        </>
       )}
     </div>
   );
