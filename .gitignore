@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Compilacion y produccion
+dist/
+dist-ssr/
+_respaldo_externo/
+
+# Variables de entorno locales y secretos
+.env
+.env.local
+.env.*.local
+*.local
+
+# Registros y temporales
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

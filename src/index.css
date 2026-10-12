@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, -apple-system,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Consolas, monospace;
+  --color-fondo: #fbfcfd;
+  --color-kore: #1d4ed8;
+  --ease-desacelerado: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#raiz {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #fbfcfd;
+  color: #0f172a;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(29 78 216 / 0.12);
+  color: #0f172a;
+}
+
+:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.6) transparent;
+}
+
+@layer components {
+  /* Tarjeta corporativa clara (compatibilidad con clase .cristal existente) */
+  .cristal {
+    background-color: #ffffff;
+    border: 1px solid rgb(226 232 240 / 0.6);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 4px 12px rgb(15 23 42 / 0.02);
+  }
+
+  .cristal-intenso {
+    background-color: #ffffff;
+    border: 1px solid rgb(226 232 240 / 0.6);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.05),
+      0 8px 24px rgb(15 23 42 / 0.06);
+  }
+
+  /* Elevación real multicapa estilo Linear para superficies de contenido */
+  .sombra-superficie {
+    background-color: #ffffff;
+    border: 1px solid rgb(226 232 240 / 0.6);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 4px 12px rgb(15 23 42 / 0.02);
+  }
+
+  /* Elevación interactiva táctil para tarjetas navegables */
+  .sombra-interactiva {
+    transition:
+      transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .sombra-interactiva:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 2px 4px rgb(15 23 42 / 0.05),
+      0 12px 28px rgb(15 23 42 / 0.08);
+  }
+
+  .campo {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60;
+  }
+
+  .campo-error {
+    @apply border-rose-400 focus:border-rose-500 focus:ring-rose-500/20;
+  }
+
+  .etiqueta-seccion {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500;
+  }
+}
+
+/*
+ * Compatibilidad: los bordes de luz cineticos quedan desactivados en el tema claro.
+ * Se conserva un anillo sutil para registros criticos sin animacion giratoria.
+ */
+.borde-luz,
+.fila-luz {
+  position: relative;
+}
+
+.borde-luz[data-luz='ambar'],
+.borde-luz[data-luz='carmesi'],
+.borde-luz[data-luz='esmeralda'] {
+  position: relative;
+}
+
+.esqueleto {
+  position: relative;
+  overflow: hidden;
+  background-color: rgb(148 163 184 / 0.18);
+}
+
+.esqueleto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent);
+  animation: brillo-esqueleto 1.6s infinite;
+}
+
+@keyframes brillo-esqueleto {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto::after {
+    animation: none;
+  }
+}
+
+html[data-animaciones='reducidas'] .esqueleto::after {
+  animation: none;
+}

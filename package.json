@@ -1,0 +1,26 @@
+{
+  "name": "kore-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capa 1 (Presentacion) de Kore - Sistema Integrado de Gestion Empresarial en 3 Capas (SIGE)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@number-flow/react": "^0.6.2",
+    "axios": "^1.20.0",
+    "lucide-react": "^1.55.0",
+    "motion": "^14.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.4"
+  }
+}
