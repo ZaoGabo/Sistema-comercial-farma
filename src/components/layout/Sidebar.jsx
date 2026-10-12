@@ -7,6 +7,7 @@ import {
   PESTANAS_NAVEGACION,
   obtenerModuloPorUsuario,
 } from '../../config/modulos.js';
+import { esSuperusuario } from '../../utils/rbac.js';
 
 /**
  * Navegacion principal estilo Linear/Notion en tema claro.
@@ -17,7 +18,7 @@ import {
  */
 export default function Sidebar({ activo, onCambio }) {
   const { usuario } = useAuth();
-  const esDba = usuario?.rol === 'DBA' || usuario?.username?.toUpperCase() === 'ZAOGABO';
+  const esDba = esSuperusuario(usuario);
   const moduloPropio = obtenerModuloPorUsuario(usuario?.modulo);
 
   const pestanas = useMemo(() => {

@@ -34,6 +34,24 @@ export function tienePermiso(permisos, accion) {
 }
 
 /**
+ * Identidad del superusuario institucional (fuente centralizada, sin literales
+ * quemados en los componentes). Canónico con la Capa 2 (`rbac.middleware.js`):
+ * rol DBA, usuario raíz ZaoGabo o módulo SISTEMA.
+ */
+export const ROL_SUPERUSUARIO = 'DBA';
+export const USUARIO_RAIZ = 'ZAOGABO';
+export const MODULO_SISTEMA = 'SISTEMA';
+
+export function esSuperusuario(usuario) {
+  if (!usuario) return false;
+  return (
+    usuario.rol === ROL_SUPERUSUARIO ||
+    String(usuario.username || '').toUpperCase() === USUARIO_RAIZ ||
+    String(usuario.modulo || '').toUpperCase() === MODULO_SISTEMA
+  );
+}
+
+/**
  * Código de error que emite la Capa 2 cuando el usuario intenta operar fuera de su
  * departamento (middleware verificarModulo, HTTP 403 Forbidden).
  */

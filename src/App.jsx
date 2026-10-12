@@ -10,7 +10,8 @@ import { NotificacionesProvider } from './context/NotificacionesContext.jsx';
 import { PreferenciasProvider, usePreferencias } from './context/PreferenciasContext.jsx';
 import { SaludProvider } from './context/SaludContext.jsx';
 import { BannerError } from './components/comunes/EstadoVacio.jsx';
-import { CLAVE_INICIO, obtenerModuloPorUsuario } from './config/modulos.js';
+import { CLAVE_DBA, CLAVE_INICIO, obtenerModuloPorUsuario } from './config/modulos.js';
+import { esSuperusuario } from './utils/rbac.js';
 import { ENTORNO } from './config/entorno.js';
 
 class LimiteErrores extends Component {
@@ -80,6 +81,7 @@ function Escritorio() {
   }, [usuario.modulo]);
 
   const Pagina = PAGINAS[seccion];
+  const accesoDbaBloqueado = seccion === CLAVE_DBA && !esSuperusuario(usuario);
 
   return (
     <div className="min-h-screen bg-[#fbfcfd]">
@@ -97,7 +99,13 @@ function Escritorio() {
             >
               <LimiteErrores key={seccion}>
                 <Suspense fallback={<CargandoSeccion />}>
-                  {Pagina ? <Pagina /> : <PaginaInicio onNavegar={setSeccion} />}
+                  {accesoDbaBloqueado ? (
+                    <BannerError mensaje="Acceso restringido: la Consola SQL DBA requiere privilegios de superusuario." />
+                  ) : Pagina ? (
+                    <Pagina />
+                  ) : (
+                    <PaginaInicio onNavegar={setSeccion} />
+                  )}
                 </Suspense>
               </LimiteErrores>
             </motion.div>

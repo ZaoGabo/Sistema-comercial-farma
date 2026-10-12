@@ -5,19 +5,24 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { ESTADOS_CONEXION, useSalud } from '../../context/SaludContext.jsx';
 import { ENTORNO } from '../../config/entorno.js';
 import { nombreRol } from '../../config/modulos.js';
+import { esSuperusuario } from '../../utils/rbac.js';
 import { iniciales } from '../../utils/formato.js';
 
 const COLORES_ROL = {
+  DBA: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   JEFE: 'bg-blue-50 text-blue-800 ring-blue-600/20',
   AUXILIAR: 'bg-slate-100 text-slate-700 ring-slate-600/20',
   OPERATIVO: 'bg-amber-50 text-amber-700 ring-amber-600/20',
 };
 
 const AVATAR_ROL = {
+  DBA: 'bg-emerald-700 text-white',
   JEFE: 'bg-blue-900 text-white',
   AUXILIAR: 'bg-slate-700 text-white',
   OPERATIVO: 'bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20',
 };
+
+const INSIGNIA_DBA = 'Control Maestro DBA';
 
 function usePanelFlotante() {
   const [abierto, setAbierto] = useState(false);
@@ -128,6 +133,8 @@ function SelectorTenant() {
 function MenuUsuario() {
   const { usuario, cerrarSesion } = useAuth();
   const { abierto, setAbierto, contenedorRef } = usePanelFlotante();
+  const esDba = esSuperusuario(usuario);
+  const etiquetaRol = esDba ? INSIGNIA_DBA : nombreRol(usuario.rol);
 
   return (
     <div className="relative" ref={contenedorRef}>
@@ -154,7 +161,7 @@ function MenuUsuario() {
             COLORES_ROL[usuario.rol] || COLORES_ROL.OPERATIVO
           }`}
         >
-          {nombreRol(usuario.rol)}
+          {etiquetaRol}
         </span>
       </button>
 
@@ -180,7 +187,7 @@ function MenuUsuario() {
                   COLORES_ROL[usuario.rol] || COLORES_ROL.OPERATIVO
                 }`}
               >
-                {nombreRol(usuario.rol)}
+                {etiquetaRol}
               </span>
             </div>
           </div>

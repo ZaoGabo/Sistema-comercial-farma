@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Lock, RefreshCw, Search, ShieldCheck } from 'lucide-react';
-import { ACCIONES, esModuloPropio } from '../../utils/rbac.js';
+import { ACCIONES, esModuloPropio, esSuperusuario } from '../../utils/rbac.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { FILTROS_ESTADO, coincideFiltroEstado, construirPasosAuditoria, CATEGORIAS } from '../../utils/estados.js';
 import BotoneraRBAC from '../comunes/BotoneraRBAC.jsx';
@@ -50,7 +50,7 @@ export default function PlantillaModulo({
   const Icono = modulo.icono;
   const { registros, cargado, registroSeleccionado, seleccionadoId } = datos;
   const { usuario } = useAuth();
-  const esDba = usuario?.rol === 'DBA' || usuario?.username?.toUpperCase() === 'ZAOGABO' || usuario?.modulo?.toUpperCase() === 'SISTEMA';
+  const esDba = esSuperusuario(usuario);
   const perteneceAlDepartamento = esDba || esModuloPropio(usuario?.modulo, modulo.clave);
 
   useEffect(() => {

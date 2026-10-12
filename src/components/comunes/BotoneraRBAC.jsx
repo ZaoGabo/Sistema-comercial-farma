@@ -5,6 +5,7 @@ import {
   ACCIONES,
   POLITICAS_BLOQUEO,
   esModuloPropio,
+  esSuperusuario,
   mensajeModuloAjeno,
   tienePermiso,
 } from '../../utils/rbac.js';
@@ -43,7 +44,7 @@ export default function BotoneraRBAC({
   claveModulo = null,
 }) {
   const { permisos, usuario } = useAuth();
-  const esDba = usuario?.rol === 'DBA' || usuario?.username?.toUpperCase() === 'ZAOGABO' || usuario?.modulo?.toUpperCase() === 'SISTEMA';
+  const esDba = esSuperusuario(usuario);
   const nombreModulo = claveModulo ? obtenerModulo(claveModulo)?.nombre || claveModulo : null;
   const ajenoAlDepartamento = esDba ? false : (claveModulo ? !esModuloPropio(usuario?.modulo, claveModulo) : false);
   const mensajeDepartamento = ajenoAlDepartamento ? mensajeModuloAjeno(nombreModulo) : null;
