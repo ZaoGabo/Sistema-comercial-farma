@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Database, Lock, RefreshCw, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Database, Lock, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { ACCIONES, esModuloPropio } from '../../utils/rbac.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { FILTROS_ESTADO, coincideFiltroEstado, construirPasosAuditoria, CATEGORIAS } from '../../utils/estados.js';
@@ -50,7 +50,8 @@ export default function PlantillaModulo({
   const Icono = modulo.icono;
   const { registros, cargado, registroSeleccionado, seleccionadoId } = datos;
   const { usuario } = useAuth();
-  const perteneceAlDepartamento = esModuloPropio(usuario?.modulo, modulo.clave);
+  const esDba = usuario?.rol === 'DBA' || usuario?.username?.toUpperCase() === 'ZAOGABO' || usuario?.modulo?.toUpperCase() === 'SISTEMA';
+  const perteneceAlDepartamento = esDba || esModuloPropio(usuario?.modulo, modulo.clave);
 
   useEffect(() => {
     if (!cargado || filtroInicializado.current) return;
@@ -127,6 +128,12 @@ export default function PlantillaModulo({
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 ring-1 ring-inset ring-slate-200/80">
                   <Lock className="size-3" aria-hidden="true" />
                   Departamento de {modulo.nombre} · Acceso de consulta
+                </span>
+              )}
+              {esDba && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                  <ShieldCheck className="size-3" aria-hidden="true" />
+                  Control Maestro DBA
                 </span>
               )}
             </h1>

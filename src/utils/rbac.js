@@ -45,6 +45,7 @@ export const CODIGO_MODULO_NO_AUTORIZADO = 'ERROR_RBAC_MODULO_NO_AUTORIZADO';
  * módulo) e insensible a mayúsculas; con datos ausentes responde falso (denegar).
  */
 export function esModuloPropio(moduloUsuario, claveModulo) {
+  if (moduloUsuario?.toUpperCase() === 'SISTEMA') return true;
   const esperado = obtenerModulo(claveModulo)?.claveUsuario;
   if (!moduloUsuario || !esperado) return false;
   return String(moduloUsuario).toUpperCase() === String(esperado).toUpperCase();

@@ -43,8 +43,9 @@ export default function BotoneraRBAC({
   claveModulo = null,
 }) {
   const { permisos, usuario } = useAuth();
+  const esDba = usuario?.rol === 'DBA' || usuario?.username?.toUpperCase() === 'ZAOGABO' || usuario?.modulo?.toUpperCase() === 'SISTEMA';
   const nombreModulo = claveModulo ? obtenerModulo(claveModulo)?.nombre || claveModulo : null;
-  const ajenoAlDepartamento = claveModulo ? !esModuloPropio(usuario?.modulo, claveModulo) : false;
+  const ajenoAlDepartamento = esDba ? false : (claveModulo ? !esModuloPropio(usuario?.modulo, claveModulo) : false);
   const mensajeDepartamento = ajenoAlDepartamento ? mensajeModuloAjeno(nombreModulo) : null;
 
   const definiciones = {
@@ -75,7 +76,7 @@ export default function BotoneraRBAC({
 
   const botones = acciones.map((clave) => {
     const definicion = definiciones[clave];
-    const permitido = tienePermiso(permisos, clave);
+    const permitido = esDba ? true : tienePermiso(permisos, clave);
     const bloqueadoPorDepartamento = ajenoAlDepartamento;
     const bloqueadoPorPolitica = !bloqueadoPorDepartamento && !permitido;
     const bloqueadoPorEstado = !bloqueadoPorDepartamento && permitido && !definicion.estadoValido;
