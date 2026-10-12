@@ -1,7 +1,9 @@
-import { Lock } from 'lucide-react';
+import { useMemo } from 'react';
+import { Lock, Terminal } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
   CLAVE_INICIO,
+  CLAVE_DBA,
   PESTANAS_NAVEGACION,
   obtenerModuloPorUsuario,
 } from '../../config/modulos.js';
@@ -11,13 +13,24 @@ import {
  * Riel vertical en escritorio con pestaña activa en blanco y sombra sutil.
  * Segregación departamental: el módulo del usuario activo lleva el micro-tag
  * "Mi departamento"; los módulos ajenos muestran un candado sutil de advertencia.
+ * Para el superusuario ZaoGabo (DBA), se despliega la pestaña exclusiva de Consola SQL.
  */
 export default function Sidebar({ activo, onCambio }) {
   const { usuario } = useAuth();
+  const esDba = usuario?.rol === 'DBA' || usuario?.username?.toUpperCase() === 'ZAOGABO';
   const moduloPropio = obtenerModuloPorUsuario(usuario?.modulo);
 
+  const pestanas = useMemo(() => {
+    if (!esDba) return PESTANAS_NAVEGACION;
+    return [
+      ...PESTANAS_NAVEGACION,
+      { clave: CLAVE_DBA, etiqueta: 'Consola SQL DBA', icono: Terminal, esDba: true },
+    ];
+  }, [esDba]);
+
   function esAjeno(pestana) {
-    if (pestana.clave === CLAVE_INICIO || !moduloPropio) return false;
+    if (esDba) return false;
+    if (pestana.clave === CLAVE_INICIO || pestana.clave === CLAVE_DBA || !moduloPropio) return false;
     return pestana.clave !== moduloPropio.clave;
   }
 
@@ -27,7 +40,7 @@ export default function Sidebar({ activo, onCambio }) {
         <div className="sticky top-24 space-y-2">
           <p className="etiqueta-seccion px-2">Módulos</p>
           <div className="space-y-1 rounded-xl border border-slate-200/60 bg-slate-100/70 p-1.5">
-            {PESTANAS_NAVEGACION.map((pestana) => {
+            {pestanas.map((pestana) => {
               const esActivo = pestana.clave === activo;
               const Icono = pestana.icono;
               const esPropio = moduloPropio && pestana.clave === moduloPropio.clave;
@@ -67,7 +80,7 @@ export default function Sidebar({ activo, onCambio }) {
       </nav>
       <nav aria-label="Módulos de negocio" className="-mx-4 overflow-x-auto px-4 pb-1 lg:hidden">
         <div className="flex w-max gap-1 rounded-xl border border-slate-200/60 bg-slate-100/70 p-1.5">
-          {PESTANAS_NAVEGACION.map((pestana) => {
+          {pestanas.map((pestana) => {
             const esActivo = pestana.clave === activo;
             const Icono = pestana.icono;
             const ajeno = esAjeno(pestana);

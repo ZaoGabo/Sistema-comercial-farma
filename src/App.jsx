@@ -50,6 +50,7 @@ const PAGINAS = {
   contabilidad: lazy(() => import('./pages/ModuloContabilidad.jsx')),
   ventas: lazy(() => import('./pages/ModuloVentas.jsx')),
   'talento-humano': lazy(() => import('./pages/ModuloTalentoHumano.jsx')),
+  dba: lazy(() => import('./pages/ConsolaDBA.jsx')),
 };
 
 function CargandoSeccion() {

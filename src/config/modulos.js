@@ -5,7 +5,10 @@ import {
   Receipt,
   Users,
   LayoutDashboard,
+  Terminal,
 } from 'lucide-react';
+
+export const CLAVE_DBA = 'dba';
 
 /**
  * Definición declarativa de los 5 módulos de negocio de Kore.
@@ -115,6 +118,7 @@ export function obtenerModuloPorUsuario(claveUsuario) {
  * Niveles jerárquicos reconocidos por el backend con su descripción institucional.
  */
 export const ROLES = {
+  DBA: { clave: 'DBA', nombre: 'Administrador Global DBA', orden: -1 },
   JEFE: { clave: 'JEFE', nombre: 'Jefe', orden: 0 },
   AUXILIAR: { clave: 'AUXILIAR', nombre: 'Auxiliar', orden: 1 },
   OPERATIVO: { clave: 'OPERATIVO', nombre: 'Operativo', orden: 2 },

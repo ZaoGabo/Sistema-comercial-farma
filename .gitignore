@@ -7,9 +7,8 @@ dist-ssr/
 _respaldo_externo/
 
 # Variables de entorno locales y secretos
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
 *.local
 
 # Registros y temporales
