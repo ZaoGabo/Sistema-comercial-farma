@@ -112,6 +112,11 @@ export function useModulo(claveModulo, { obtenerId }) {
         }
         return resultado;
       } catch (fallo) {
+        try {
+          await refrescarRegistro(id);
+        } catch {
+          /* Silencioso */
+        }
         if (lanzarError) throw fallo;
         notificarFallo('No se pudo completar la operación', fallo);
         return null;
