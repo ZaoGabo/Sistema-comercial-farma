@@ -1,20 +1,22 @@
-import { Ban, CheckCheck, Lock, Plus } from 'lucide-react';
+import { Ban, CheckCheck, Lock, Pencil, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { obtenerModulo } from '../../config/modulos.js';
 import {
   ACCIONES,
+  MENSAJE_SOLO_BORRADOR,
   POLITICAS_BLOQUEO,
   esModuloPropio,
   esSuperusuario,
   mensajeModuloAjeno,
   tienePermiso,
 } from '../../utils/rbac.js';
-import { puedeAnularse, puedeAprobarse } from '../../utils/estados.js';
+import { esPendiente, puedeAnularse, puedeAprobarse } from '../../utils/estados.js';
 import BotonMagnetico from './BotonMagnetico.jsx';
 
 const MOTIVO_ESTADO = {
   [ACCIONES.APROBAR]: 'La transacción ya no admite aprobación en su estado actual.',
   [ACCIONES.ANULAR]: 'La transacción ya se encuentra anulada.',
+  [ACCIONES.MODIFICAR]: MENSAJE_SOLO_BORRADOR,
 };
 
 /**
@@ -39,6 +41,7 @@ export default function BotoneraRBAC({
   onCrear,
   onAprobar,
   onAnular,
+  onModificar,
   mostrarPoliticas = true,
   alinearDerecha = false,
   claveModulo = null,
@@ -70,6 +73,13 @@ export default function BotoneraRBAC({
       etiqueta: etiquetas.anular,
       accion: onAnular,
       estadoValido: puedeAnularse(estado),
+    },
+    [ACCIONES.MODIFICAR]: {
+      variante: 'secundario',
+      icono: Pencil,
+      etiqueta: etiquetas.modificar || 'Modificar',
+      accion: onModificar,
+      estadoValido: estado === undefined ? true : esPendiente(estado),
     },
   };
 

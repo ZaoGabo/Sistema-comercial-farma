@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Ban, TriangleAlert, X } from 'lucide-react';
+import { Ban, Timer, TriangleAlert, X } from 'lucide-react';
 import BotonMagnetico from '../comunes/BotonMagnetico.jsx';
+import { useInactividadModal } from '../../hooks/useInactividadModal.js';
 
 export default function ModalAnular({
   abierto,
@@ -15,6 +16,12 @@ export default function ModalAnular({
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const ocupado = Boolean(cargando || enviando);
+  const { segundosRestantes, totalPermitido, fraccionRestante } = useInactividadModal({
+    abierto,
+    onCerrar,
+    pausado: ocupado,
+  });
 
   if (!abierto) return null;
 
@@ -94,6 +101,26 @@ export default function ModalAnular({
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
+        {!ocupado && (
+          <div
+            className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-6 py-2"
+            role="status"
+            aria-label={`La ventana se cerrara por inactividad en ${segundosRestantes} segundos`}
+          >
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <Timer className="size-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+              <span className="tabular-nums">
+                Cierre automatico por inactividad en {segundosRestantes} de {totalPermitido} segundos
+              </span>
+              <span className="ml-auto h-1.5 w-32 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
+                <span
+                  className="block h-full rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${Math.round(fraccionRestante * 100)}%` }}
+                />
+              </span>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={alEnviar} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="max-h-[62vh] min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">

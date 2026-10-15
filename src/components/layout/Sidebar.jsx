@@ -7,30 +7,40 @@ import {
   PESTANAS_NAVEGACION,
   obtenerModuloPorUsuario,
 } from '../../config/modulos.js';
-import { esSuperusuario } from '../../utils/rbac.js';
+import {
+  esSuperusuario,
+  esDbaTecnico,
+  tieneAccesoConsolaDba,
+  mensajeSodBloqueado,
+} from '../../utils/rbac.js';
 
 /**
  * Navegacion principal estilo Linear/Notion en tema claro.
  * Riel vertical en escritorio con pestaña activa en blanco y sombra sutil.
  * Segregación departamental: el módulo del usuario activo lleva el micro-tag
  * "Mi departamento"; los módulos ajenos muestran un candado sutil de advertencia.
- * Para el superusuario ZaoGabo (DBA), se despliega la pestaña exclusiva de Consola SQL.
+ * Para perfiles con acceso DBA (ZaoGabo y USR_DBA_TECNICO), se despliega la pestaña
+ * de Consola SQL DBA. Para DBA_TECNICO rige Segregación de Funciones (SoD),
+ * atenuando los 5 módulos de negocio con candado de acceso restringido.
  */
 export default function Sidebar({ activo, onCambio }) {
   const { usuario } = useAuth();
   const esDba = esSuperusuario(usuario);
+  const esDbaTec = esDbaTecnico(usuario);
+  const accesoConsola = tieneAccesoConsolaDba(usuario);
   const moduloPropio = obtenerModuloPorUsuario(usuario?.modulo);
 
   const pestanas = useMemo(() => {
-    if (!esDba) return PESTANAS_NAVEGACION;
+    if (!accesoConsola) return PESTANAS_NAVEGACION;
     return [
       ...PESTANAS_NAVEGACION,
       { clave: CLAVE_DBA, etiqueta: 'Consola SQL DBA', icono: Terminal, esDba: true },
     ];
-  }, [esDba]);
+  }, [accesoConsola]);
 
   function esAjeno(pestana) {
     if (esDba) return false;
+    if (esDbaTec) return pestana.clave !== CLAVE_DBA;
     if (pestana.clave === CLAVE_INICIO || pestana.clave === CLAVE_DBA || !moduloPropio) return false;
     return pestana.clave !== moduloPropio.clave;
   }
@@ -45,19 +55,27 @@ export default function Sidebar({ activo, onCambio }) {
               const esActivo = pestana.clave === activo;
               const Icono = pestana.icono;
               const esPropio = moduloPropio && pestana.clave === moduloPropio.clave;
+              const bloqueadoSod = esDbaTec && pestana.clave !== CLAVE_DBA;
               const ajeno = esAjeno(pestana);
+              const titulo = bloqueadoSod
+                ? mensajeSodBloqueado()
+                : ajeno
+                  ? 'Acceso restringido: departamento ajeno a su área'
+                  : undefined;
               return (
                 <button
                   key={pestana.clave}
                   type="button"
                   onClick={() => onCambio(pestana.clave)}
                   aria-current={esActivo ? 'page' : undefined}
-                  aria-label={ajeno ? `${pestana.etiqueta}. Acceso restringido a su departamento` : undefined}
-                  title={ajeno ? 'Acceso restringido: departamento ajeno a su área' : undefined}
+                  aria-label={ajeno ? `${pestana.etiqueta}. ${titulo}` : undefined}
+                  title={titulo}
                   className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
                     esActivo
                       ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
-                      : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
+                      : bloqueadoSod
+                        ? 'text-slate-400 opacity-60 hover:bg-slate-200/60 hover:text-slate-600'
+                        : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
                   }`}
                 >
                   {Icono && (
@@ -84,19 +102,27 @@ export default function Sidebar({ activo, onCambio }) {
           {pestanas.map((pestana) => {
             const esActivo = pestana.clave === activo;
             const Icono = pestana.icono;
+            const bloqueadoSod = esDbaTec && pestana.clave !== CLAVE_DBA;
             const ajeno = esAjeno(pestana);
+            const titulo = bloqueadoSod
+              ? mensajeSodBloqueado()
+              : ajeno
+                ? 'Acceso restringido: departamento ajeno a su área'
+                : undefined;
             return (
               <button
                 key={pestana.clave}
                 type="button"
                 onClick={() => onCambio(pestana.clave)}
                 aria-current={esActivo ? 'page' : undefined}
-                aria-label={ajeno ? `${pestana.etiqueta}. Acceso restringido a su departamento` : undefined}
-                title={ajeno ? 'Acceso restringido: departamento ajeno a su área' : undefined}
+                aria-label={ajeno ? `${pestana.etiqueta}. ${titulo}` : undefined}
+                title={titulo}
                 className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   esActivo
                     ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
+                    : bloqueadoSod
+                      ? 'text-slate-400 opacity-60 hover:text-slate-600'
+                      : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {Icono && <Icono className="size-4 shrink-0" aria-hidden="true" />}

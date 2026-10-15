@@ -8,6 +8,7 @@ import { useCatalogos } from '../../hooks/useCatalogos.js';
 import { serviciosModulos } from '../../api/modulos.servicio.js';
 import { ENTORNO } from '../../config/entorno.js';
 import { aNumero, nombreMes, redondear } from '../../utils/formato.js';
+import { aOpcionesCatalogo } from '../../utils/catalogos.js';
 
 const MESES = Array.from({ length: 12 }, (_, indice) => indice + 1);
 
@@ -29,11 +30,11 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
 
   const opcionesEmpleados = useMemo(
     () =>
-      empleados.map((item) => ({
-        valor: item.ID_EMPLEADO,
-        etiqueta: item.NOMBRE_COMPLETO,
-        detalle: `${item.EMP_CEDULA} - ${item.CARGO}`,
-      })),
+      aOpcionesCatalogo(empleados, {
+        valor: 'ID_EMPLEADO',
+        etiqueta: 'NOMBRE_COMPLETO',
+        detalle: (item) => `${item.EMP_CEDULA} - ${item.CARGO}`,
+      }),
     [empleados],
   );
 
@@ -89,7 +90,7 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
 
   return (
     <form onSubmit={alEnviar} noValidate>
-      <div className="space-y-5">
+      <div className="space-y-5 pb-8">
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo
             etiqueta="Empleado"

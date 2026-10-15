@@ -89,9 +89,10 @@ export function useModulo(claveModulo, { obtenerId }) {
 
   const notificarFallo = useCallback(
     (titulo, fallo) => {
+      const esSod = fallo?.codigo === 'ERROR_RBAC_SOD_MODULO_BLOQUEADO';
       notificar({
         tipo: fallo.esAccesoDenegado ? 'politica' : 'error',
-        titulo: fallo.esAccesoDenegado ? 'Acción no autorizada' : titulo,
+        titulo: esSod ? 'Segregación de Funciones (SoD)' : fallo.esAccesoDenegado ? 'Acción no autorizada' : titulo,
         mensaje: fallo.message,
       });
     },
@@ -165,6 +166,19 @@ export function useModulo(claveModulo, { obtenerId }) {
     [servicio, notificar, notificarFallo, refrescarRegistro, cargarModulo, claveModulo],
   );
 
+  const modificar = useCallback(
+    async (id, payload) => {
+      const resultado = await ejecutarTransaccion(
+        id,
+        'modificar',
+        () => servicio.modificar(id, payload),
+        { lanzarError: true },
+      );
+      return resultado;
+    },
+    [ejecutarTransaccion, servicio],
+  );
+
   return {
     registros,
     cargando,
@@ -181,5 +195,6 @@ export function useModulo(claveModulo, { obtenerId }) {
     aprobar,
     anular,
     crear,
+    modificar,
   };
 }

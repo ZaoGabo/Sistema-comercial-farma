@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X } from 'lucide-react';
+import { Timer, X } from 'lucide-react';
+import { useInactividadModal } from '../../hooks/useInactividadModal.js';
 
 /**
  * Marco comun de los modales de Kore en tema claro.
  * Ventana blanca con borde fino y sombra suave.
+ * Incluye temporizador de inactividad transaccional por rol: al expirar se cierra
+ * solo la ventana modal, sin cerrar la sesion general del usuario.
  */
 export default function ModalBase({
   abierto,
@@ -15,8 +18,14 @@ export default function ModalBase({
   ancho = 'max-w-2xl',
   ocupado = false,
   tono = 'cian',
+  inactividad = true,
   children,
 }) {
+  const { segundosRestantes, totalPermitido, fraccionRestante } = useInactividadModal({
+    abierto,
+    onCerrar,
+    pausado: ocupado || !inactividad,
+  });
   useEffect(() => {
     if (!abierto) return undefined;
     function alPulsarTecla(evento) {
@@ -77,7 +86,27 @@ export default function ModalBase({
             <X className="size-5" aria-hidden="true" />
           </button>
         </header>
-        <div className="max-h-[62vh] min-h-0 flex-1 overflow-y-auto px-6 py-4">
+        {inactividad && !ocupado && (
+          <div
+            className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-6 py-2"
+            role="status"
+            aria-label={`La ventana se cerrara por inactividad en ${segundosRestantes} segundos`}
+          >
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <Timer className="size-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+              <span className="tabular-nums">
+                Cierre automatico por inactividad en {segundosRestantes} de {totalPermitido} segundos
+              </span>
+              <span className="ml-auto h-1.5 w-32 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
+                <span
+                  className="block h-full rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${Math.round(fraccionRestante * 100)}%` }}
+                />
+              </span>
+            </div>
+          </div>
+        )}
+        <div className="max-h-[78vh] min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {children}
         </div>
       </motion.div>

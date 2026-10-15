@@ -46,7 +46,7 @@ export function PieFormulario({
   deshabilitado = false,
 }) {
   return (
-    <div className="sticky bottom-0 -mx-6 -mb-4 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
+    <div className="sticky bottom-0 -mx-6 -mb-5 mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur-sm">
       <button
         type="button"
         onClick={onCancelar}

@@ -31,6 +31,7 @@ export const MODULOS = [
       crear: 'Crear Orden',
       aprobar: 'Aprobar Orden',
       anular: 'Anular Orden',
+      modificar: 'Modificar Orden',
     },
   },
   {
@@ -46,6 +47,7 @@ export const MODULOS = [
       crear: 'Registrar Recepción',
       aprobar: 'Aprobar Recepción',
       anular: 'Anular Recepción',
+      modificar: 'Modificar Recepción',
     },
   },
   {
@@ -61,6 +63,7 @@ export const MODULOS = [
       crear: 'Registrar Pago',
       aprobar: 'Aprobar Pago',
       anular: 'Anular Pago',
+      modificar: 'Modificar Pago',
     },
   },
   {
@@ -76,6 +79,7 @@ export const MODULOS = [
       crear: 'Crear Factura',
       aprobar: 'Emitir Factura',
       anular: 'Anular Factura',
+      modificar: 'Modificar Factura',
     },
   },
   {
@@ -91,6 +95,7 @@ export const MODULOS = [
       crear: 'Crear Nómina',
       aprobar: 'Liquidar Nómina',
       anular: 'Anular Nómina',
+      modificar: 'Modificar Nómina',
     },
   },
 ];
@@ -119,6 +124,7 @@ export function obtenerModuloPorUsuario(claveUsuario) {
  */
 export const ROLES = {
   DBA: { clave: 'DBA', nombre: 'Administrador Global DBA', orden: -1 },
+  DBA_TECNICO: { clave: 'DBA_TECNICO', nombre: 'DBA de Infraestructura (SoD)', orden: -0.5 },
   JEFE: { clave: 'JEFE', nombre: 'Jefe', orden: 0 },
   AUXILIAR: { clave: 'AUXILIAR', nombre: 'Auxiliar', orden: 1 },
   OPERATIVO: { clave: 'OPERATIVO', nombre: 'Operativo', orden: 2 },

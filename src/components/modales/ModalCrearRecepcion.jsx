@@ -7,6 +7,7 @@ import { useCatalogos } from '../../hooks/useCatalogos.js';
 import { useOrdenesDisponibles } from '../../hooks/useOrdenesDisponibles.js';
 import { serviciosModulos } from '../../api/modulos.servicio.js';
 import { aNumero, formatearEntero, formatearMoneda } from '../../utils/formato.js';
+import { aOpcionesCatalogo, esEntidadActiva } from '../../utils/catalogos.js';
 
 function Formulario({ catalogos, onGuardar, onCancelar }) {
   const [valores, setValores] = useState({
@@ -42,10 +43,11 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
   );
   const opcionesEmpleados = useMemo(
     () =>
-      (catalogos.empleados || []).map((empleado) => ({
-        valor: empleado.ID_EMPLEADO,
-        etiqueta: empleado.NOMBRE_COMPLETO,
-      })),
+      aOpcionesCatalogo(catalogos.empleados || [], {
+        valor: 'ID_EMPLEADO',
+        etiqueta: 'NOMBRE_COMPLETO',
+        detalle: 'CARGO',
+      }),
     [catalogos.empleados],
   );
 
@@ -131,7 +133,7 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
 
   return (
     <form onSubmit={alEnviar} noValidate>
-      <div className="space-y-4">
+      <div className="space-y-5 pb-8">
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo
             etiqueta="Orden de compra aprobada"
@@ -161,12 +163,15 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
               value={valores.idBodega}
               onChange={(evento) => actualizar('idBodega', evento.target.value)}
             >
-              <option value="">Seleccione una bodega</option>
-              {bodegas.map((bodega) => (
-                <option key={bodega.ID_BODEGA} value={bodega.ID_BODEGA}>
-                  {bodega.BOD_NOMBRE}
-                </option>
-              ))}
+              <option value="">Seleccione una bodega activa</option>
+              {bodegas.map((bodega) => {
+                const activa = esEntidadActiva(bodega);
+                return (
+                  <option key={bodega.ID_BODEGA} value={bodega.ID_BODEGA} disabled={!activa}>
+                    {bodega.BOD_NOMBRE}{activa ? '' : ' (Inactivo)'}
+                  </option>
+                );
+              })}
             </select>
           </Campo>
           <Campo

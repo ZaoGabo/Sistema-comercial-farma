@@ -7,8 +7,7 @@ export const authServicio = {
   },
 
   async iniciarSesion({ username, password }) {
-    const cuerpo = { username };
-    if (password) cuerpo.password = password;
+    const cuerpo = { username, password };
     const { data } = await cliente.post('/auth/login', cuerpo);
     return { token: data.token, usuario: data.usuario, mensaje: data.mensaje };
   },

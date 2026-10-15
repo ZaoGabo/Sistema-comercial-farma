@@ -11,7 +11,7 @@ import { PreferenciasProvider, usePreferencias } from './context/PreferenciasCon
 import { SaludProvider } from './context/SaludContext.jsx';
 import { BannerError } from './components/comunes/EstadoVacio.jsx';
 import { CLAVE_DBA, CLAVE_INICIO, obtenerModuloPorUsuario } from './config/modulos.js';
-import { esSuperusuario } from './utils/rbac.js';
+import { esSuperusuario, esDbaTecnico, tieneAccesoConsolaDba } from './utils/rbac.js';
 import { ENTORNO } from './config/entorno.js';
 
 class LimiteErrores extends Component {
@@ -69,19 +69,26 @@ function CargandoSeccion() {
 
 function Escritorio() {
   const { usuario } = useAuth();
-  const [seccion, setSeccion] = useState(CLAVE_INICIO);
+  const esDbaTec = esDbaTecnico(usuario);
+  const seccionInicial = esDbaTec ? CLAVE_DBA : (obtenerModuloPorUsuario(usuario.modulo)?.clave || CLAVE_INICIO);
+  const [seccion, setSeccion] = useState(seccionInicial);
   const moduloAnterior = useRef(usuario.modulo);
 
   // Al alternar perfiles con el Credential Hub se conserva la pantalla actual para observar la
-  // reacción de la botonera RBAC; solo si el nuevo perfil pertenece a otro módulo se navega a él.
+  // reacción de la botonera RBAC; para DBA Técnico se navega por defecto a la Consola DBA.
   useEffect(() => {
     if (moduloAnterior.current === usuario.modulo) return;
     moduloAnterior.current = usuario.modulo;
-    setSeccion(obtenerModuloPorUsuario(usuario.modulo)?.clave || CLAVE_INICIO);
-  }, [usuario.modulo]);
+    if (esDbaTecnico(usuario)) {
+      setSeccion(CLAVE_DBA);
+    } else {
+      setSeccion(obtenerModuloPorUsuario(usuario.modulo)?.clave || CLAVE_INICIO);
+    }
+  }, [usuario.modulo, usuario]);
 
   const Pagina = PAGINAS[seccion];
-  const accesoDbaBloqueado = seccion === CLAVE_DBA && !esSuperusuario(usuario);
+  const accesoDbaBloqueado = seccion === CLAVE_DBA && !tieneAccesoConsolaDba(usuario);
+  const bloqueoNegocioPorSod = esDbaTec && seccion !== CLAVE_DBA;
 
   return (
     <div className="min-h-screen bg-[#fbfcfd]">
@@ -100,7 +107,9 @@ function Escritorio() {
               <LimiteErrores key={seccion}>
                 <Suspense fallback={<CargandoSeccion />}>
                   {accesoDbaBloqueado ? (
-                    <BannerError mensaje="Acceso restringido: la Consola SQL DBA requiere privilegios de superusuario." />
+                    <BannerError mensaje="Acceso restringido: la Consola SQL DBA requiere privilegios técnicos de base de datos." />
+                  ) : bloqueoNegocioPorSod ? (
+                    <BannerError mensaje="Acceso denegado (Segregación de Funciones - SoD): El perfil DBA Técnico administra la infraestructura y tiene estrictamente restringido el acceso a los módulos de negocio." />
                   ) : Pagina ? (
                     <Pagina />
                   ) : (

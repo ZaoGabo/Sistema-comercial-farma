@@ -13,6 +13,7 @@ import TarjetasKpi from '../comunes/TarjetasKpi.jsx';
 import { SeccionDetalle } from '../comunes/ElementosDetalle.jsx';
 import { BannerError } from '../comunes/EstadoVacio.jsx';
 import ModalAnular from '../modales/ModalAnular.jsx';
+import ModalEditarDocumento from '../modales/ModalEditarDocumento.jsx';
 
 const TAMANO_PAGINA = 10;
 
@@ -44,6 +45,7 @@ export default function PlantillaModulo({
   const [pagina, setPagina] = useState(1);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [modalAnularAbierto, setModalAnularAbierto] = useState(false);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const filtroInicializado = useRef(false);
   const busquedaDiferida = useDeferredValue(busqueda);
 
@@ -256,11 +258,12 @@ export default function PlantillaModulo({
         pie={
           registroSeleccionado && (
             <BotoneraRBAC
-              acciones={[ACCIONES.APROBAR, ACCIONES.ANULAR]}
+              acciones={[ACCIONES.MODIFICAR, ACCIONES.APROBAR, ACCIONES.ANULAR]}
               etiquetas={modulo.etiquetas}
               claveModulo={modulo.clave}
               estado={estadoActivo}
               enProceso={datos.accionEnCurso}
+              onModificar={() => setModalEditarAbierto(true)}
               onAprobar={() => datos.aprobar(seleccionadoId)}
               onAnular={() => setModalAnularAbierto(true)}
             />
@@ -300,6 +303,18 @@ export default function PlantillaModulo({
         onConfirmar={async (motivo) => {
           await datos.anular(seleccionadoId, motivo);
           setModalAnularAbierto(false);
+        }}
+      />
+
+      <ModalEditarDocumento
+        abierto={modalEditarAbierto && Boolean(registroSeleccionado)}
+        onCerrar={() => setModalEditarAbierto(false)}
+        claveModulo={modulo.clave}
+        registro={registroSeleccionado}
+        titulo={`${modulo.etiquetas.modificar || 'Modificar documento'}`}
+        onGuardar={async (payload) => {
+          await datos.modificar(seleccionadoId, payload);
+          setModalEditarAbierto(false);
         }}
       />
     </div>

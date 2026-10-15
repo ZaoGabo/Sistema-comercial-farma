@@ -12,7 +12,9 @@ const ALTO_MAXIMO_LISTA = 240;
  * La lista de opciones se renderiza en un portal fijo anclado al campo, por lo que no se
  * recorta dentro de contenedores con desplazamiento interno (como el cuerpo de los modales).
  *
- * opciones: [{ valor, etiqueta, detalle? }]  (valor se compara como texto)
+ * opciones: [{ valor, etiqueta, detalle?, deshabilitada?, insignia? }] (valor se compara como texto)
+ * Las opciones con deshabilitada en verdadero muestran la insignia "Inactivo" y no
+ * pueden seleccionarse, para prevenir errores ORA-20011 a ORA-20018.
  */
 export default function SelectorBuscable({
   id,
@@ -44,7 +46,7 @@ export default function SelectorBuscable({
       opciones.map((opcion) => ({
         ...opcion,
         valor: String(opcion.valor),
-        clave: `${opcion.etiqueta} ${opcion.detalle || ''}`.toLowerCase(),
+        clave: `${opcion.etiqueta} ${opcion.detalle || ''} ${opcion.insignia || ''} ${opcion.deshabilitada ? 'inactivo' : 'activo'}`.toLowerCase(),
       })),
     [opciones],
   );
@@ -133,6 +135,7 @@ export default function SelectorBuscable({
   }
 
   function elegir(opcion) {
+    if (opcion?.deshabilitada) return;
     onCambio(opcion ? opcion.valor : '');
     cerrar();
   }
@@ -146,7 +149,8 @@ export default function SelectorBuscable({
       setIndiceActivo((actual) => Math.max(actual - 1, 0));
     } else if (evento.key === 'Enter') {
       evento.preventDefault();
-      if (visibles[indiceActivo]) elegir(visibles[indiceActivo]);
+      const candidata = visibles[indiceActivo];
+      if (candidata && !candidata.deshabilitada) elegir(candidata);
     } else if (evento.key === 'Escape') {
       evento.stopPropagation();
       cerrar();
@@ -242,26 +246,40 @@ export default function SelectorBuscable({
               {visibles.map((opcion, indice) => {
                 const activa = indice === indiceActivo;
                 const elegida = opcion.valor === String(valor);
+                const inhabilitada = Boolean(opcion.deshabilitada);
                 return (
                   <li
                     key={opcion.valor}
                     id={`${idLista}-${indice}`}
                     role="option"
                     aria-selected={elegida}
+                    aria-disabled={inhabilitada || undefined}
                     onPointerDown={(evento) => evento.preventDefault()}
                     onClick={() => elegir(opcion)}
-                    onMouseEnter={() => setIndiceActivo(indice)}
-                    className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${
-                      activa ? 'bg-blue-50 text-slate-900' : 'text-slate-600'
+                    onMouseEnter={() => {
+                      if (!inhabilitada) setIndiceActivo(indice);
+                    }}
+                    title={inhabilitada ? 'Entidad inactiva en el catálogo maestro (bloqueada por regla de negocio)' : undefined}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                      inhabilitada
+                        ? 'cursor-not-allowed bg-slate-50/60 opacity-60'
+                        : `cursor-pointer ${activa ? 'bg-blue-50 text-slate-900' : 'text-slate-600'}`
                     }`}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate">{opcion.etiqueta}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="block truncate">{opcion.etiqueta}</span>
+                        {(opcion.insignia || inhabilitada) && (
+                          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/30">
+                            {opcion.insignia || 'Inactivo'}
+                          </span>
+                        )}
+                      </span>
                       {opcion.detalle && (
                         <span className="block truncate text-[11px] text-slate-500">{opcion.detalle}</span>
                       )}
                     </span>
-                    {elegida && <Check className="size-4 shrink-0 text-blue-700" aria-hidden="true" />}
+                    {elegida && !inhabilitada && <Check className="size-4 shrink-0 text-blue-700" aria-hidden="true" />}
                   </li>
                 );
               })}

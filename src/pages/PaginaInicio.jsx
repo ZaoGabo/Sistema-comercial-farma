@@ -17,6 +17,7 @@ import { aNumero } from '../utils/formato.js';
 const PERMISOS_VISIBLES = [
   { clave: ACCIONES.CREAR, etiqueta: 'Crear transacciones', descripcion: 'Registrar nuevas operaciones' },
   { clave: ACCIONES.VER, etiqueta: 'Consultar y ver', descripcion: 'Acceso al inspector de detalle' },
+  { clave: ACCIONES.MODIFICAR, etiqueta: 'Modificar borradores', descripcion: 'Ajustar documentos en estado pendiente' },
   { clave: ACCIONES.APROBAR, etiqueta: 'Aprobar', descripcion: 'Autorizar operaciones pendientes' },
   { clave: ACCIONES.ANULAR, etiqueta: 'Anular', descripcion: 'Revertir operaciones con motivo' },
 ];

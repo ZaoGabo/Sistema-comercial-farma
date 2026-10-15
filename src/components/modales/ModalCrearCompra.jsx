@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import ModalBase from './ModalBase.jsx';
 import { AvisoCatalogo, Campo, ErrorServidor, PieFormulario, leerNumero } from './ElementosFormulario.jsx';
 import NumeroAnimado from '../comunes/NumeroAnimado.jsx';
@@ -7,9 +7,8 @@ import SelectorBuscable from '../comunes/SelectorBuscable.jsx';
 import { useCatalogos } from '../../hooks/useCatalogos.js';
 import { serviciosModulos } from '../../api/modulos.servicio.js';
 import { ENTORNO } from '../../config/entorno.js';
+import { aOpcionesCatalogo } from '../../utils/catalogos.js';
 import { fechaHoyIso, formatearMoneda, redondear } from '../../utils/formato.js';
-
-const CANTIDAD_PRODUCTOS_EXIGIDA = 5;
 
 function crearLineaVacia() {
   return { idProducto: '', cantidad: '1', precioUnitario: '' };
@@ -22,42 +21,47 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
     fechaEntrega: '',
     observaciones: '',
   });
-  const [lineas, setLineas] = useState(() =>
-    Array.from({ length: CANTIDAD_PRODUCTOS_EXIGIDA }, crearLineaVacia),
-  );
+  const [lineas, setLineas] = useState(() => [crearLineaVacia()]);
   const [errores, setErrores] = useState({});
   const [errorServidor, setErrorServidor] = useState('');
   const [enviando, setEnviando] = useState(false);
 
   const productos = useMemo(() => catalogos.productos || [], [catalogos.productos]);
 
-  const opcionesProveedores = useMemo(
-    () =>
-      (catalogos.proveedores || []).map((proveedor) => ({
-        valor: proveedor.ID_PROVEEDOR,
-        etiqueta: proveedor.PRV_RAZON_SOCIAL,
-        detalle: proveedor.PRV_RUC,
-      })),
-    [catalogos.proveedores],
-  );
-  const opcionesCompradores = useMemo(
-    () =>
-      (catalogos.compradores || []).map((comprador) => ({
-        valor: comprador.ID_EMPLEADO,
-        etiqueta: comprador.NOMBRE_COMPLETO,
-        detalle: comprador.CARGO,
-      })),
-    [catalogos.compradores],
-  );
-  const opcionesProductos = useMemo(
-    () =>
-      productos.map((producto) => ({
-        valor: producto.ID_PRODUCTO,
-        etiqueta: producto.PRO_NOMBRE,
-        detalle: producto.PRO_CODIGO,
-      })),
-    [productos],
-  );
+  const opcionesProveedores = useMemo(() => {
+    const lista = catalogos.proveedores || [];
+    const ordenados = [...lista].sort((a, b) => (Number(a.ID_PROVEEDOR) || 0) - (Number(b.ID_PROVEEDOR) || 0));
+    return aOpcionesCatalogo(ordenados, {
+      valor: 'ID_PROVEEDOR',
+      etiqueta: 'PRV_RAZON_SOCIAL',
+      detalle: 'PRV_RUC',
+    });
+  }, [catalogos.proveedores]);
+
+  const opcionesCompradores = useMemo(() => {
+    const lista = catalogos.compradores || [];
+    const ordenados = [...lista].sort((a, b) => {
+      const aEsCompras = String(a.CARGO || '').toUpperCase().includes('COMPRAS') ? 0 : 1;
+      const bEsCompras = String(b.CARGO || '').toUpperCase().includes('COMPRAS') ? 0 : 1;
+      if (aEsCompras !== bEsCompras) return aEsCompras - bEsCompras;
+      return (Number(a.ID_EMPLEADO) || 0) - (Number(b.ID_EMPLEADO) || 0);
+    });
+    return aOpcionesCatalogo(ordenados, {
+      valor: 'ID_EMPLEADO',
+      etiqueta: 'NOMBRE_COMPLETO',
+      detalle: 'CARGO',
+    });
+  }, [catalogos.compradores]);
+
+  const opcionesProductos = useMemo(() => {
+    const lista = productos || [];
+    const ordenados = [...lista].sort((a, b) => (Number(a.ID_PRODUCTO) || 0) - (Number(b.ID_PRODUCTO) || 0));
+    return aOpcionesCatalogo(ordenados, {
+      valor: 'ID_PRODUCTO',
+      etiqueta: 'PRO_NOMBRE',
+      detalle: 'PRO_CODIGO',
+    });
+  }, [productos]);
 
   const totales = useMemo(() => {
     const subtotal = lineas.reduce((suma, linea) => {
@@ -79,6 +83,14 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
     );
   }
 
+  function agregarLinea() {
+    setLineas((actuales) => [...actuales, crearLineaVacia()]);
+  }
+
+  function eliminarLinea(indice) {
+    setLineas((actuales) => (actuales.length <= 1 ? actuales : actuales.filter((_, posicion) => posicion !== indice)));
+  }
+
   function alElegirProducto(indice, idProducto) {
     const producto = productos.find((item) => String(item.ID_PRODUCTO) === idProducto);
     actualizarLinea(indice, {
@@ -95,6 +107,7 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
     else if (valores.fechaEntrega < fechaHoyIso()) {
       nuevos.fechaEntrega = 'La fecha de entrega no puede ser anterior a hoy.';
     }
+    if (lineas.length === 0) nuevos.detalleGeneral = 'Agregue al menos un producto a la orden.';
 
     const vistos = new Set();
     lineas.forEach((linea, indice) => {
@@ -110,7 +123,9 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
     });
 
     setErrores(nuevos);
-    const hayErrorCabecera = ['idProveedor', 'idEmpleado', 'fechaEntrega'].some((clave) => nuevos[clave]);
+    const hayErrorCabecera = ['idProveedor', 'idEmpleado', 'fechaEntrega', 'detalleGeneral'].some(
+      (clave) => nuevos[clave],
+    );
     const hayErrorLineas = nuevos.lineas.some((error) => Object.keys(error).length > 0);
     return !hayErrorCabecera && !hayErrorLineas;
   }
@@ -120,6 +135,12 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
     setErrorServidor('');
     if (!validar()) return;
 
+    const detalles = lineas.map((linea) => ({
+      idProducto: Number(linea.idProducto),
+      cantidad: Number(linea.cantidad),
+      precioUnitario: Number(linea.precioUnitario),
+    }));
+
     setEnviando(true);
     try {
       await onGuardar({
@@ -127,11 +148,8 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
         idEmpleado: Number(valores.idEmpleado),
         observaciones: valores.observaciones.trim() || undefined,
         fechaEntrega: valores.fechaEntrega,
-        productos: lineas.map((linea) => ({
-          idProducto: Number(linea.idProducto),
-          cantidad: Number(linea.cantidad),
-          precioUnitario: Number(linea.precioUnitario),
-        })),
+        detalles,
+        productos: detalles,
       });
     } catch (fallo) {
       setErrorServidor(fallo.message);
@@ -141,7 +159,7 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
 
   return (
     <form onSubmit={alEnviar} noValidate>
-      <div className="space-y-5">
+      <div className="space-y-5 pb-8">
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo etiqueta="Proveedor" htmlFor="compra-proveedor" requerido error={errores.idProveedor}>
             <SelectorBuscable
@@ -149,7 +167,7 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
               opciones={opcionesProveedores}
               valor={valores.idProveedor}
               onCambio={(valor) => actualizarCampo('idProveedor', valor)}
-              placeholder="Buscar proveedor"
+              placeholder="Buscar proveedor activo"
               invalido={Boolean(errores.idProveedor)}
             />
           </Campo>
@@ -187,20 +205,37 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
         </div>
 
         <section aria-labelledby="titulo-productos-compra" className="space-y-3">
-          <h3 id="titulo-productos-compra" className="etiqueta-seccion">
-            Productos de la orden (exactamente {CANTIDAD_PRODUCTOS_EXIGIDA})
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="titulo-productos-compra" className="etiqueta-seccion">
+              Productos de la orden ({lineas.length})
+            </h3>
+            <button
+              type="button"
+              onClick={agregarLinea}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <Plus className="size-3.5" aria-hidden="true" />
+              Agregar producto
+            </button>
+          </div>
+          {errores.detalleGeneral && <p className="text-[11px] text-rose-600">{errores.detalleGeneral}</p>}
           <div className="space-y-2">
             {lineas.map((linea, indice) => {
               const error = errores.lineas?.[indice] || {};
               const prefijo = `compra-linea-${indice}`;
+              const cantidad = leerNumero(linea.cantidad);
+              const precio = leerNumero(linea.precioUnitario);
+              const subtotalLinea =
+                Number.isFinite(cantidad) && Number.isFinite(precio)
+                  ? redondear(cantidad * precio)
+                  : 0;
               return (
                 <div
                   key={prefijo}
-                  className="grid grid-cols-[1.5rem_1fr] items-start gap-x-3 gap-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[1.5rem_1fr_6rem_8rem]"
+                  className="grid grid-cols-[1.5rem_1fr] items-start gap-x-3 gap-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[1.5rem_minmax(0,1fr)_5.5rem_7rem_auto]"
                 >
                   <span className="mt-2 text-center font-mono text-xs text-slate-400">{indice + 1}</span>
-                  <div>
+                  <div className="min-w-0">
                     <SelectorBuscable
                       id={`${prefijo}-producto`}
                       etiquetaAccesible={`Producto ${indice + 1}`}
@@ -248,6 +283,21 @@ function Formulario({ catalogos, onGuardar, onCancelar }) {
                       <p className="mt-1 text-[11px] text-rose-600">{error.precioUnitario}</p>
                     )}
                   </div>
+                  <div className="col-start-2 flex items-center gap-2 sm:col-start-auto">
+                    <span className="font-mono text-xs tabular-nums text-slate-600" aria-label={`Subtotal linea ${indice + 1}`}>
+                      {formatearMoneda(subtotalLinea)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => eliminarLinea(indice)}
+                      disabled={lineas.length <= 1}
+                      className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30"
+                      aria-label={`Eliminar producto ${indice + 1}`}
+                      title="Eliminar linea"
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -288,9 +338,9 @@ export default function ModalCrearCompra({ abierto, onCerrar, onGuardar }) {
       abierto={abierto}
       onCerrar={onCerrar}
       titulo="Nueva orden de compra"
-      descripcion="Capture la cabecera y los cinco productos que exige el procedimiento SP_CREAR_ORDEN_COMPRA_5PROD."
+      descripcion="Capture la cabecera y agregue libremente las lineas de productos con cantidad y precio referencial."
       icono={ShoppingCart}
-      ancho="max-w-3xl"
+      ancho="max-w-4xl"
     >
       {catalogos ? (
         <Formulario catalogos={catalogos} onGuardar={onGuardar} onCancelar={onCerrar} />

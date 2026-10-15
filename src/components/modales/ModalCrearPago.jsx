@@ -96,7 +96,7 @@ function Formulario({ catalogos, metodosConocidos, onGuardar, onCancelar }) {
 
   return (
     <form onSubmit={alEnviar} noValidate>
-      <div className="space-y-4">
+      <div className="space-y-5 pb-8">
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo
             etiqueta="Orden de compra"
